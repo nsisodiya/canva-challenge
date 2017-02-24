@@ -13,7 +13,7 @@ const getArrayOf = (length) => {
 define("Tournament", function (parallelExec, sequentialExec, ajax) {
   class Tournament {
     constructor(teamsPerMatch, numberOfTeams) {
-      this.isTournamentStarted = false;
+      this.tournamentEnded = false;
       this.teamsPerMatch = teamsPerMatch;
       this.numberOfTeams = numberOfTeams;
       this.allTeams = {};
@@ -68,9 +68,11 @@ define("Tournament", function (parallelExec, sequentialExec, ajax) {
         })
         .then(() => {
           console.log("Match END");
+          this.tournamentEnded = true;
           const finalMatch = this.allMatchData[this.allMatchData.length - 1][0];
           const finalWinnerTeamId = finalMatch.winnerTeamId;
           const finalWinnerTeamName = this.allTeams[finalWinnerTeamId].name;
+          this.finalWinnerTeamName = finalWinnerTeamName;
           document.querySelector("#winner").innerHTML = finalWinnerTeamName;
         });
     }

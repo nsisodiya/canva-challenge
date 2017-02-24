@@ -17,6 +17,9 @@ I have used this kind of syntax `/team?tournamentId=${this.tournamentId}&teamId=
 * Removal of Event Listener.
 => I have not used removal of eventListener, because in this particular example it is no use. 
 
+* Validation
+=> I have not added any validation. I can add validation if needed. 
+
 
 Solution Used
 
