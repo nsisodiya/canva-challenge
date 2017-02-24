@@ -4,8 +4,7 @@ module.exports = function (configuration) {
     basePath: '',
     browsers: ['Chrome'],
     colors: true,
-    exclude: [
-    ],
+    exclude: [],
     files: [
       '../../client/common/define.js',
       '../../client/common/chainPromise.js',
