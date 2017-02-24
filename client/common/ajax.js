@@ -1,8 +1,9 @@
+const SERVER_URL = window.location.origin;
 define("ajax", function () {
   var ajax = {
     get (config) {
       return fetch(
-        config.url,
+        `${SERVER_URL}${config.url}`,
         {
           method: "GET"
         })
@@ -12,7 +13,7 @@ define("ajax", function () {
     },
     post(config) {
       return fetch(
-        config.url,
+        `${SERVER_URL}${config.url}`,
         {
           method: "POST",
           headers: {

@@ -9,7 +9,6 @@
 const getArrayOf = (length) => {
   return Array.from(Array(length));
 };
-const SERVER_URL = window.location.origin;
 
 define("Tournament", function (parallelExec, sequentialExec, ajax) {
   class Tournament {
@@ -96,7 +95,7 @@ define("Tournament", function (parallelExec, sequentialExec, ajax) {
 
       return ajax.post(
         {
-          url: `${SERVER_URL}/tournament`,
+          url: "/tournament",
           body: `numberOfTeams=${this.numberOfTeams}&teamsPerMatch=${this.teamsPerMatch}`
         })
         .then(({matchUps, tournamentId}) => {
@@ -114,7 +113,7 @@ define("Tournament", function (parallelExec, sequentialExec, ajax) {
       //http://localhost:8765/match?tournamentId=0&round=0&match=0
       return ajax.get(
         {
-          url: `${SERVER_URL}/match?tournamentId=${this.tournamentId}&round=${roundId}&match=${matchId}`
+          url: `/match?tournamentId=${this.tournamentId}&round=${roundId}&match=${matchId}`
         })
         .then(({score}) => {
           this.allMatchData[roundId][matchId].matchScore = score;
@@ -125,7 +124,7 @@ define("Tournament", function (parallelExec, sequentialExec, ajax) {
       //http://localhost:8765/team?tournamentId=0&teamId=0
       return ajax.get(
         {
-          url: `${SERVER_URL}/team?tournamentId=${this.tournamentId}&teamId=${teamId}`
+          url: `/team?tournamentId=${this.tournamentId}&teamId=${teamId}`
         })
         .then((teamData) => {
           this.allTeams[teamData.teamId] = teamData;
@@ -139,15 +138,13 @@ define("Tournament", function (parallelExec, sequentialExec, ajax) {
       const querystr = teamIds.map((teamId) => {
         return `teamScores=${this.allTeams[teamId].score}`;
       }).join("&");
-      const queryPath = `/winner?tournamentId=${this.tournamentId}&${querystr}&matchScore=${matchScore}`;
 
       //http://localhost:8765/winner?tournamentId=0&teamScores=8&teamScores=9&matchScore=67
       return ajax.get(
         {
-          url: `${SERVER_URL}${queryPath}`
+          url: `/winner?tournamentId=${this.tournamentId}&${querystr}&matchScore=${matchScore}`
         })
         .then(({score}) => {
-          console.log("Winning", score, queryPath);
           this.findWinnerFromScore(teamIds, score, roundId, matchId);
         });
     }
