@@ -28,7 +28,7 @@ const parallelProcess = function (arr, callback) {
 const getArrayOf = (length) => {
   return Array.from(Array(length));
 };
-const ServerURL = window.location.origin;
+const SERVER_URL = window.location.origin;
 // const log = (b) => {
 //   window.res = b;
 //   console.log(b);
@@ -96,7 +96,7 @@ define("Tournament", function () {
       //This will make a XHR call to Server and get Initial Data
 
       fetch(
-        `${ServerURL}/tournament`,
+        `${SERVER_URL}/tournament`,
         {
           method: "POST",
           headers: {
@@ -152,7 +152,7 @@ define("Tournament", function () {
     getScore(roundId, matchId) {
       //http://localhost:8765/match?tournamentId=0&round=0&match=0
       return fetch(
-        `${ServerURL}/match?tournamentId=${this.tournamentId}&round=${roundId}&match=${matchId}`,
+        `${SERVER_URL}/match?tournamentId=${this.tournamentId}&round=${roundId}&match=${matchId}`,
         {
           method: "GET"
         })
@@ -166,7 +166,7 @@ define("Tournament", function () {
     getTeamInfo(teamId) {
       //http://localhost:8765/team?tournamentId=0&teamId=0
       return fetch(
-        `${ServerURL}/team?tournamentId=${this.tournamentId}&teamId=${teamId}`,
+        `${SERVER_URL}/team?tournamentId=${this.tournamentId}&teamId=${teamId}`,
         {
           method: "GET"
         })
@@ -191,34 +191,40 @@ define("Tournament", function () {
     playMatch(matchData) {
       console.log("Playing Match", matchData);
       const {teamIds, roundId, matchId, matchScore} = matchData;
-      const T0Score = this.allTeams[teamIds[0]].score;
-      const T1Score = this.allTeams[teamIds[1]].score;
+
+      const querystr = teamIds.map((teamId) => {
+        return `teamScores=${this.allTeams[teamId].score}`;
+      }).join("&");
+      const queryPath = `/winner?tournamentId=${this.tournamentId}&${querystr}&matchScore=${matchScore}`;
 
       //http://localhost:8765/winner?tournamentId=0&teamScores=8&teamScores=9&matchScore=67
       return fetch(
-        `${ServerURL}/winner?tournamentId=${this.tournamentId}&teamScores=${T0Score}&teamScores=${T1Score}&matchScore=${matchScore}`,
+        `${SERVER_URL}${queryPath}`,
         {
           method: "GET"
         })
         .then(function (response) {
           return response.json();
         }).then(({score}) => {
-          console.log("Winning", score, `&teamScores=${T0Score}&teamScores=${T1Score}&matchScore=${matchScore}`);
+          console.log("Winning", score, queryPath);
           //Check if there is a Tie
-          var winnerTeamId;
-          if (score === T0Score && score === T1Score) {
-            console.log("We got a Tie");
-            winnerTeamId = Math.min(teamIds[0], teamIds[1]);
-          } else {
-            if (score === T0Score) {
-              //Winner is T0;
-              winnerTeamId = teamIds[0];
-            } else if (score === T1Score) {
-              winnerTeamId = teamIds[1];
-            } else {
-              throw new Error("We are unable to find any Winner, Some mistake");
-            }
-          }
+          //Step 1 - Convert All Teams IDs Array to Team Object Array with score
+          //Step 2 - Filter all Winner Teams
+          const allWinnerTeamIds = teamIds
+            .map((teamId) => {
+              return {
+                teamId: teamId,
+                score: this.allTeams[teamId].score
+              };
+            })
+            .filter(function (teamData) {
+              return teamData.score === score;
+            })
+            .map(function (teamData) {
+              return teamData.teamId;
+            });
+          //Step 3 - If there are multiple Winner, Take something which is having Lowest id.
+          var winnerTeamId = Math.min(...allWinnerTeamIds);
           this.allMatchData[roundId][matchId].winnerTeamId = winnerTeamId;
           this.allMatchData[roundId][matchId].isMatchCompleted = true;
           console.log("Winner Team Id ", winnerTeamId);
