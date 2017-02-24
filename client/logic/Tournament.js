@@ -19,7 +19,7 @@ define("Tournament", function (parallelExec, sequentialExec, chainPromise) {
       this.numberOfTeams = numberOfTeams;
       this.allTeams = {};
       this.generateCombinations();
-      this.create();
+      this.runTournament();
       console.log(this);
       //var Process = ["CreateTournament", ["getTeamInfo", "getScoreInfo"], "PlayTournament", "SetWinner"];
     }
@@ -61,10 +61,10 @@ define("Tournament", function (parallelExec, sequentialExec, chainPromise) {
     }
 
     //This will create a Tournament.
-    create() {
+    createTournament() {
       //This will make a XHR call to Server and get Initial Data
 
-      fetch(
+      return fetch(
         `${SERVER_URL}/tournament`,
         {
           method: "POST",
@@ -85,27 +85,26 @@ define("Tournament", function (parallelExec, sequentialExec, chainPromise) {
             this.allMatchData[0][match].teamIds = teamIds;
             this.allTeamIds.push(...teamIds);
           });
-          console.log(this.allTeamIds);
-          this.getAllInfo();
         });
-      //.then(processStatus)
-
     }
 
     /*  This will load information of all Teams
      * */
-    getAllInfo() {
-
-      Promise.all([
-        parallelExec(this.allTeamIds, (teamId) => {
-          return this.getTeamInfo(teamId);
-        }),
-        parallelExec(this.allMatchData, (roundData, roundId) => {
-          return parallelExec(roundData, (matchData, matchId) => {
-            return this.getScore(roundId, matchId);
-          });
+    runTournament() {
+      this
+        .createTournament()
+        .then(() => {
+          return Promise.all([
+            parallelExec(this.allTeamIds, (teamId) => {
+              return this.getTeamInfo(teamId);
+            }),
+            parallelExec(this.allMatchData, (roundData, roundId) => {
+              return parallelExec(roundData, (matchData, matchId) => {
+                return this.getScore(roundId, matchId);
+              });
+            })
+          ]);
         })
-      ])
         .then(() => {
           console.log("We got All Needed Info", this);
           //We will play all Match one by one
@@ -153,6 +152,7 @@ define("Tournament", function (parallelExec, sequentialExec, chainPromise) {
           this.allTeams[teamData.teamId] = teamData;
         });
     }
+
     playMatch(matchData) {
       console.log("Playing Match", matchData);
       const {teamIds, roundId, matchId, matchScore} = matchData;

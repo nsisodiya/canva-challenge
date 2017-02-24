@@ -7,7 +7,11 @@ module.exports = function (configuration) {
     exclude: [
     ],
     files: [
-      '../../client/**/*.js',
+      '../../client/common/define.js',
+      '../../client/common/chainPromise.js',
+      '../../client/common/parallelExec.js',
+      '../../client/common/sequentialExec.js',
+      '../../client/logic/Tournament.js',
       '../../test/karma/**/*_test.js'
     ],
     frameworks: [
