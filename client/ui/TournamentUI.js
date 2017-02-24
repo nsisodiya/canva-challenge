@@ -19,16 +19,14 @@ define("TournamentUI", function (Tournament) {
         const numberOfTeams = parseInt(document.querySelector("#numberOfTeams").value);
         this.runNewTournament(teamsPerMatch, numberOfTeams);
       }, false);
-
-      window.setInterval(() => {
-        if (this.tournament !== undefined) {
-          this.node.innerHTML = this.render();
-        }
-      }, 100);
     }
 
     runNewTournament(teamsPerMatch, numberOfTeams) {
       this.tournament = new Tournament(teamsPerMatch, numberOfTeams);
+      this.tournament.setUICallback(() => {
+        //This will be called when any Update is available from Business Logic
+        this.node.innerHTML = this.render();
+      });
     }
 
     render() {

@@ -36,6 +36,7 @@ define("Tournament", function (parallelExec, sequentialExec, ajax) {
         });
       });
 
+      this.sendUpdateToUI();
       this.runTournament();
       console.log(this);
       //var Process = ["CreateTournament", ["getTeamInfo", "getScoreInfo"], "PlayTournament", "SetWinner"];
@@ -181,6 +182,7 @@ define("Tournament", function (parallelExec, sequentialExec, ajax) {
       if (nextRound < totalRoundsPossible) {
         this.passTeamToNextRoundMatch(winnerTeamId, nextRound, nextMatchId);
       }
+      this.sendUpdateToUI();
     }
 
     passTeamToNextRoundMatch(winnerTeamId, nextRound, nextMatchId) {
@@ -188,6 +190,22 @@ define("Tournament", function (parallelExec, sequentialExec, ajax) {
         this.allMatchData[nextRound][nextMatchId].teamIds = [];
       }
       this.allMatchData[nextRound][nextMatchId].teamIds.push(winnerTeamId);
+    }
+
+    setUICallback(uiCallback) {
+      this.uiCallback = uiCallback;
+    }
+
+    sendUpdateToUI() {
+      //This is a HACK - Better solutions is available.
+      //Push a ASync Update to UI
+      window.setTimeout(() => {
+        try {
+          this.uiCallback();
+        } catch (ex) {
+          console.log(ex);
+        }
+      }, 0);
     }
   }
   return Tournament;
