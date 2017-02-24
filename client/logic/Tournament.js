@@ -108,7 +108,14 @@ define("Tournament", function (parallelExec, sequentialExec, chainPromise) {
       ])
         .then(() => {
           console.log("We got All Needed Info", this);
-          return this.startTournament();
+          //We will play all Match one by one
+          //All Round will be in Sequence. One by One
+          //All Match inside a Round will be Parallel,
+          return sequentialExec(this.allMatchData, (roundData) => {
+            return parallelExec(roundData, (matchData) => {
+              return this.playMatch(matchData);
+            });
+          });
         })
         .then(() => {
           console.log("Match END");
@@ -146,18 +153,6 @@ define("Tournament", function (parallelExec, sequentialExec, chainPromise) {
           this.allTeams[teamData.teamId] = teamData;
         });
     }
-
-    startTournament() {
-      //We will play all Match one by one
-      //All Round will be in Sequence. One by One
-      //All Match inside a Round will be Parallel,
-      return sequentialExec(this.allMatchData, (roundData) => {
-        return parallelExec(roundData, (matchData) => {
-          return this.playMatch(matchData);
-        });
-      });
-    }
-
     playMatch(matchData) {
       console.log("Playing Match", matchData);
       const {teamIds, roundId, matchId, matchScore} = matchData;
