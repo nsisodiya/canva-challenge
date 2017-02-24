@@ -11,7 +11,7 @@ const getArrayOf = (length) => {
 };
 const SERVER_URL = window.location.origin;
 
-define("Tournament", function (parallelExec, sequentialExec, chainPromise) {
+define("Tournament", function (parallelExec, sequentialExec, ajax) {
   class Tournament {
     constructor(teamsPerMatch, numberOfTeams) {
       this.isTournamentStarted = false;
@@ -94,18 +94,10 @@ define("Tournament", function (parallelExec, sequentialExec, chainPromise) {
     createTournament() {
       //This will make a XHR call to Server and get Initial Data
 
-      return fetch(
-        `${SERVER_URL}/tournament`,
+      return ajax.post(
         {
-          method: "POST",
-          headers: {
-            "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
-          },
+          url: `${SERVER_URL}/tournament`,
           body: `numberOfTeams=${this.numberOfTeams}&teamsPerMatch=${this.teamsPerMatch}`
-          //Note : A much better better is - JSON to queryString conversion. But I have to use Webpack in order to use which is not allowed in assignment.
-        })
-        .then(function (response) {
-          return response.json();
         })
         .then(({matchUps, tournamentId}) => {
           this.tournamentId = tournamentId;
@@ -120,28 +112,22 @@ define("Tournament", function (parallelExec, sequentialExec, chainPromise) {
 
     getScore(roundId, matchId) {
       //http://localhost:8765/match?tournamentId=0&round=0&match=0
-      return fetch(
-        `${SERVER_URL}/match?tournamentId=${this.tournamentId}&round=${roundId}&match=${matchId}`,
+      return ajax.get(
         {
-          method: "GET"
+          url: `${SERVER_URL}/match?tournamentId=${this.tournamentId}&round=${roundId}&match=${matchId}`
         })
-        .then(function (response) {
-          return response.json();
-        }).then(({score}) => {
+        .then(({score}) => {
           this.allMatchData[roundId][matchId].matchScore = score;
         });
     }
 
     getTeamInfo(teamId) {
       //http://localhost:8765/team?tournamentId=0&teamId=0
-      return fetch(
-        `${SERVER_URL}/team?tournamentId=${this.tournamentId}&teamId=${teamId}`,
+      return ajax.get(
         {
-          method: "GET"
+          url: `${SERVER_URL}/team?tournamentId=${this.tournamentId}&teamId=${teamId}`
         })
-        .then(function (response) {
-          return response.json();
-        }).then((teamData) => {
+        .then((teamData) => {
           this.allTeams[teamData.teamId] = teamData;
         });
     }
@@ -156,14 +142,11 @@ define("Tournament", function (parallelExec, sequentialExec, chainPromise) {
       const queryPath = `/winner?tournamentId=${this.tournamentId}&${querystr}&matchScore=${matchScore}`;
 
       //http://localhost:8765/winner?tournamentId=0&teamScores=8&teamScores=9&matchScore=67
-      return fetch(
-        `${SERVER_URL}${queryPath}`,
+      return ajax.get(
         {
-          method: "GET"
+          url: `${SERVER_URL}${queryPath}`
         })
-        .then(function (response) {
-          return response.json();
-        }).then(({score}) => {
+        .then(({score}) => {
           console.log("Winning", score, queryPath);
           this.findWinnerFromScore(teamIds, score, roundId, matchId);
         });
