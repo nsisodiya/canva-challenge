@@ -6,7 +6,9 @@
     "start": "node ./server/index.js",
     "test:integration": "mocha ./test/integration/**/*_test.js",
     "test:karma": "karma start ./test/karma/karma-configuration.js",
-    "test": "npm run test:integration && npm run test:karma -- --single-run"
+    "test": "npm run test:integration && npm run test:karma -- --single-run",
+    "eslint": "eslint client/**",
+    "client": "node ./client/client.js"
   },
   "devDependencies": {
     "chai": "^3.5.0",
@@ -24,6 +26,7 @@
   "dependencies": {
     "body-parser": "^1.15.2",
     "cors": "^2.8.1",
+    "eslint": "^3.16.1",
     "express": "^4.14.0"
   }
 }
