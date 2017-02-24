@@ -201,7 +201,9 @@ define("Tournament", function (parallelExec, sequentialExec, ajax) {
       //Push a ASync Update to UI
       window.setTimeout(() => {
         try {
-          this.uiCallback();
+          if(typeof this.uiCallback === "function"){
+            this.uiCallback();
+          }
         } catch (ex) {
           console.log(ex);
         }
