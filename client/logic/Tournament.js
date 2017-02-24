@@ -6,43 +6,12 @@
  *   Tournament is Class for managing all information about a Tournament. You can create a Tournament, and extract information on who is winner.
  * */
 
-const sequentialProcess = function (arr, callback) {
-  var pp = Promise.resolve();
-  arr.forEach(function (v, i, A) {
-    pp = pp.then(function () {
-      return callback(v, i, A);
-    });
-  });
-  return pp;
-};
-
-//WHeN to use ? when async result from One Element is NOT needed in another.
-const parallelProcess = function (arr, callback) {
-  var pArray = [];
-  arr.forEach(function (v, i, A) {
-    pArray.push(callback(v, i, A));
-  });
-  return Promise.all(pArray);
-};
-
 const getArrayOf = (length) => {
   return Array.from(Array(length));
 };
 const SERVER_URL = window.location.origin;
-// const log = (b) => {
-//   window.res = b;
-//   console.log(b);
-//   return b;
-// };
-// const processStatus = function (response) {
-//   // status "0" to handle local files fetching (e.g. Cordova/Phonegap etc.)
-//   if (response.status === 200 || response.status === 0) {
-//     return Promise.resolve(response)
-//   } else {
-//     return Promise.reject(new Error(response.statusText))
-//   }
-// };
-define("Tournament", function () {
+
+define("Tournament", function (parallelExec, sequentialExec, chainPromise) {
   class Tournament {
     constructor(teamsPerMatch, numberOfTeams) {
       this.isTournamentStarted = false;
@@ -52,7 +21,7 @@ define("Tournament", function () {
       this.generateCombinations();
       this.create();
       console.log(this);
-      //var Process = ["CreateTournament", ["getTeamInfo", "getScoreInfo"], "PlayTournament", "Winner"];
+      //var Process = ["CreateTournament", ["getTeamInfo", "getScoreInfo"], "PlayTournament", "SetWinner"];
     }
 
     static getNumberOfRounds(teamsPerMatch, numberOfTeams) {
@@ -110,11 +79,14 @@ define("Tournament", function () {
         })
         .then(({matchUps, tournamentId}) => {
           this.tournamentId = tournamentId;
-          this.getAllInfo();
           //FILL teamIds
+          this.allTeamIds = [];
           matchUps.forEach(({match, teamIds}) => {
             this.allMatchData[0][match].teamIds = teamIds;
+            this.allTeamIds.push(...teamIds);
           });
+          console.log(this.allTeamIds);
+          this.getAllInfo();
         });
       //.then(processStatus)
 
@@ -123,30 +95,28 @@ define("Tournament", function () {
     /*  This will load information of all Teams
      * */
     getAllInfo() {
-      var pArray = [];
-      //Get Team Data
-      getArrayOf(this.numberOfTeams).forEach((v, teamId) => {
-        pArray.push(this.getTeamInfo(teamId));
-      });
 
-      //Get Score Data
-      this.allMatchData.forEach((roundData, roundId) => {
-        roundData.forEach((matchData, matchId) => {
-          pArray.push(this.getScore(roundId, matchId));
-        });
-      });
-
-      Promise.all(pArray).then(() => {
-        console.log("We got Everything", this);
-        this.startTournament()
-          .then(() => {
-            console.log("Match END");
-            const finalMatch = this.allMatchData[this.allMatchData.length - 1][0];
-            const finalWinnerTeamId = finalMatch.winnerTeamId;
-            const finalWinnerTeamName = this.allTeams[finalWinnerTeamId].name;
-            document.querySelector("#winner").innerHTML = finalWinnerTeamName;
+      Promise.all([
+        parallelExec(this.allTeamIds, (teamId) => {
+          return this.getTeamInfo(teamId);
+        }),
+        parallelExec(this.allMatchData, (roundData, roundId) => {
+          return parallelExec(roundData, (matchData, matchId) => {
+            return this.getScore(roundId, matchId);
           });
-      });
+        })
+      ])
+        .then(() => {
+          console.log("We got All Needed Info", this);
+          return this.startTournament();
+        })
+        .then(() => {
+          console.log("Match END");
+          const finalMatch = this.allMatchData[this.allMatchData.length - 1][0];
+          const finalWinnerTeamId = finalMatch.winnerTeamId;
+          const finalWinnerTeamName = this.allTeams[finalWinnerTeamId].name;
+          document.querySelector("#winner").innerHTML = finalWinnerTeamName;
+        });
     }
 
     getScore(roundId, matchId) {
@@ -181,8 +151,8 @@ define("Tournament", function () {
       //We will play all Match one by one
       //All Round will be in Sequence. One by One
       //All Match inside a Round will be Parallel,
-      return sequentialProcess(this.allMatchData, (roundData) => {
-        return parallelProcess(roundData, (matchData) => {
+      return sequentialExec(this.allMatchData, (roundData) => {
+        return parallelExec(roundData, (matchData) => {
           return this.playMatch(matchData);
         });
       });
@@ -207,45 +177,47 @@ define("Tournament", function () {
           return response.json();
         }).then(({score}) => {
           console.log("Winning", score, queryPath);
-          //Check if there is a Tie
-          //Step 1 - Convert All Teams IDs Array to Team Object Array with score
-          //Step 2 - Filter all Winner Teams
-          const allWinnerTeamIds = teamIds
-            .map((teamId) => {
-              return {
-                teamId: teamId,
-                score: this.allTeams[teamId].score
-              };
-            })
-            .filter(function (teamData) {
-              return teamData.score === score;
-            })
-            .map(function (teamData) {
-              return teamData.teamId;
-            });
-          //Step 3 - If there are multiple Winner, Take something which is having Lowest id.
-          var winnerTeamId = Math.min(...allWinnerTeamIds);
-          this.allMatchData[roundId][matchId].winnerTeamId = winnerTeamId;
-          this.allMatchData[roundId][matchId].isMatchCompleted = true;
-          console.log("Winner Team Id ", winnerTeamId);
-          //Now, this Team is Winner, Lets Pass it to next Round.
-          this.passTeamToNextRoundMatch(winnerTeamId, roundId, matchId);
+          this.findWinnerFromScore(teamIds, score, roundId, matchId);
         });
     }
 
-    passTeamToNextRoundMatch(winnerTeamId, roundId, matchId) {
+    findWinnerFromScore(teamIds, score, roundId, matchId) {
+      //Check if there is a Tie
+      //Step 1 - Convert All Teams IDs Array to Team Object Array with score
+      //Step 2 - Filter all Winner Teams
+      const allWinnerTeamIds = teamIds
+        .map((teamId) => {
+          return {
+            teamId: teamId,
+            score: this.allTeams[teamId].score
+          };
+        })
+        .filter(function (teamData) {
+          return teamData.score === score;
+        })
+        .map(function (teamData) {
+          return teamData.teamId;
+        });
+      //Step 3 - If there are multiple Winner, Take something which is having Lowest id.
+      var winnerTeamId = Math.min(...allWinnerTeamIds);
+      this.allMatchData[roundId][matchId].winnerTeamId = winnerTeamId;
+      this.allMatchData[roundId][matchId].isMatchCompleted = true;
+      console.log("Winner Team Id ", winnerTeamId);
+      //Now, this Team is Winner, Lets Pass it to next Round.
+
       var totalRoundsPossible = this.allMatchData.length;
       var nextRound = roundId + 1;
-      if (nextRound === totalRoundsPossible) {
-        //Skip
-      } else {
-        var nextMatchId = parseInt(matchId / this.teamsPerMatch);
-        if (this.allMatchData[nextRound][nextMatchId].teamIds === null) {
-          this.allMatchData[nextRound][nextMatchId].teamIds = [];
-        }
-        this.allMatchData[nextRound][nextMatchId].teamIds.push(winnerTeamId);
-        console.log(this);
+      var nextMatchId = parseInt(matchId / this.teamsPerMatch);
+      if (nextRound < totalRoundsPossible) {
+        this.passTeamToNextRoundMatch(winnerTeamId, nextRound, nextMatchId);
       }
+    }
+
+    passTeamToNextRoundMatch(winnerTeamId, nextRound, nextMatchId) {
+      if (this.allMatchData[nextRound][nextMatchId].teamIds === null) {
+        this.allMatchData[nextRound][nextMatchId].teamIds = [];
+      }
+      this.allMatchData[nextRound][nextMatchId].teamIds.push(winnerTeamId);
     }
   }
   return Tournament;
