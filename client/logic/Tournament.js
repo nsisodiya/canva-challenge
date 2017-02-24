@@ -18,27 +18,6 @@ define("Tournament", function (parallelExec, sequentialExec, chainPromise) {
       this.teamsPerMatch = teamsPerMatch;
       this.numberOfTeams = numberOfTeams;
       this.allTeams = {};
-      this.generateCombinations();
-      this.runTournament();
-      console.log(this);
-      //var Process = ["CreateTournament", ["getTeamInfo", "getScoreInfo"], "PlayTournament", "SetWinner"];
-    }
-
-    static getNumberOfRounds(teamsPerMatch, numberOfTeams) {
-      let rounds = 1;
-      let teamCount;
-
-      for (teamCount = teamsPerMatch; teamCount < numberOfTeams; teamCount *= teamsPerMatch) {
-        rounds++;
-      }
-      if (teamCount === numberOfTeams) {
-        return rounds;
-      } else {
-        return null;
-      }
-    }
-
-    generateCombinations() {
       const totalRounds = Tournament.getNumberOfRounds(this.teamsPerMatch, this.numberOfTeams);
       this.allMatchData = [];
       getArrayOf(totalRounds).forEach((v, roundId) => {
@@ -58,41 +37,13 @@ define("Tournament", function (parallelExec, sequentialExec, chainPromise) {
         });
       });
 
+      this.runTournament();
+      console.log(this);
+      //var Process = ["CreateTournament", ["getTeamInfo", "getScoreInfo"], "PlayTournament", "SetWinner"];
     }
 
-    //This will create a Tournament.
-    createTournament() {
-      //This will make a XHR call to Server and get Initial Data
-
-      return fetch(
-        `${SERVER_URL}/tournament`,
-        {
-          method: "POST",
-          headers: {
-            "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
-          },
-          body: `numberOfTeams=${this.numberOfTeams}&teamsPerMatch=${this.teamsPerMatch}`
-          //Note : A much better better is - JSON to queryString conversion. But I have to use Webpack in order to use which is not allowed in assignment.
-        })
-        .then(function (response) {
-          return response.json();
-        })
-        .then(({matchUps, tournamentId}) => {
-          this.tournamentId = tournamentId;
-          //FILL teamIds
-          this.allTeamIds = [];
-          matchUps.forEach(({match, teamIds}) => {
-            this.allMatchData[0][match].teamIds = teamIds;
-            this.allTeamIds.push(...teamIds);
-          });
-        });
-    }
-
-    /*  This will load information of all Teams
-     * */
     runTournament() {
-      this
-        .createTournament()
+      this.createTournament()
         .then(() => {
           return Promise.all([
             parallelExec(this.allTeamIds, (teamId) => {
@@ -122,6 +73,48 @@ define("Tournament", function (parallelExec, sequentialExec, chainPromise) {
           const finalWinnerTeamId = finalMatch.winnerTeamId;
           const finalWinnerTeamName = this.allTeams[finalWinnerTeamId].name;
           document.querySelector("#winner").innerHTML = finalWinnerTeamName;
+        });
+    }
+
+    static getNumberOfRounds(teamsPerMatch, numberOfTeams) {
+      let rounds = 1;
+      let teamCount;
+
+      for (teamCount = teamsPerMatch; teamCount < numberOfTeams; teamCount *= teamsPerMatch) {
+        rounds++;
+      }
+      if (teamCount === numberOfTeams) {
+        return rounds;
+      } else {
+        return null;
+      }
+    }
+
+    //This will create a Tournament.
+    createTournament() {
+      //This will make a XHR call to Server and get Initial Data
+
+      return fetch(
+        `${SERVER_URL}/tournament`,
+        {
+          method: "POST",
+          headers: {
+            "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
+          },
+          body: `numberOfTeams=${this.numberOfTeams}&teamsPerMatch=${this.teamsPerMatch}`
+          //Note : A much better better is - JSON to queryString conversion. But I have to use Webpack in order to use which is not allowed in assignment.
+        })
+        .then(function (response) {
+          return response.json();
+        })
+        .then(({matchUps, tournamentId}) => {
+          this.tournamentId = tournamentId;
+          //FILL teamIds
+          this.allTeamIds = [];
+          matchUps.forEach(({match, teamIds}) => {
+            this.allMatchData[0][match].teamIds = teamIds;
+            this.allTeamIds.push(...teamIds);
+          });
         });
     }
 
