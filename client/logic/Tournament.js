@@ -6,6 +6,69 @@
  *   Tournament is Class for managing all information about a Tournament. You can create a Tournament, and extract information on who is winner.
  * */
 
+/*  Sample Data Structure used in this CLASS
+
+{
+    "tournamentEnded": true,
+    "tournamentId": 6,
+    "allTeams": {
+        "0": {
+            "teamId": 0,
+            "name": "Mount Druitt Platypuses",
+            "score": 34
+         },
+         "1": {
+             "teamId": 1,
+             "name": "Northbridge Emus",
+             "score": 93
+         },
+         "2": {
+             "teamId": 2,
+             "name": "Wareemba Highlanders",
+             "score": 93
+         },
+         "3": {
+             "teamId": 3,
+             "name": "Matraville Magic",
+             "score": 45
+         }
+    },
+    "allMatchData": [
+       [
+           {
+               "roundId": 0,
+               "matchId": 0,
+               "teamIds": [0,1],
+               "isMatchCompleted": true,
+               "matchScore": 61,
+               "winnerTeamId": 0
+           },
+           {
+               "roundId": 0,
+               "matchId": 1,
+               "teamIds": [2,3],
+               "isMatchCompleted": true,
+               "matchScore": 53,
+               "winnerTeamId": 3
+           }
+       ],
+       [
+            {
+               "roundId": 1,
+               "matchId": 0,
+               "teamIds": [3,0],
+               "isMatchCompleted": true,
+               "matchScore": 61,
+               "winnerTeamId": 3
+            }
+       ]
+    ],
+    "allTeamIds": [0,1,2,3],
+    "finalWinnerTeamName": "Matraville Magic"
+}
+
+ * */
+
 const getArrayOf = (length) => {
   return Array.from(Array(length));
 };
@@ -201,7 +264,7 @@ define("Tournament", function (parallelExec, sequentialExec, ajax) {
       //Push a ASync Update to UI
       window.setTimeout(() => {
         try {
-          if(typeof this.uiCallback === "function"){
+          if (typeof this.uiCallback === "function") {
             this.uiCallback();
           }
         } catch (ex) {
