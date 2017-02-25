@@ -102,22 +102,18 @@ define("Tournament", function (parallelExec, sequentialExec, ajax) {
       this.sendUpdateToUI();
       this.runTournament();
       console.log(this);
-      //var Process = ["CreateTournament", ["getTeamInfo", "getScoreInfo"], "PlayTournament", "SetWinner"];
+      //var Process = [CreateTournament, getAllTeamsInfo, RunTournament , SetWinner];
+      //RunTournament = [PlayRound(0), PlayRound(1), PlayRound(2), .... PlayRound(r)]
+      //PlayRound = PlayMatch(0) | PlayMatch(1) | PlayMatch(2) | .... | PlayMatch(m)
+      //PlayRound = [getScoreOfMatch, FindWinnerTeam]
     }
 
     runTournament() {
       this.createTournament()
         .then(() => {
-          return Promise.all([
-            parallelExec(this.allTeamIds, (teamId) => {
-              return this.getTeamInfo(teamId);
-            }),
-            parallelExec(this.allMatchData, (roundData, roundId) => {
-              return parallelExec(roundData, (matchData, matchId) => {
-                return this.getScore(roundId, matchId);
-              });
-            })
-          ]);
+          return parallelExec(this.allTeamIds, (teamId) => {
+            return this.getTeamInfo(teamId);
+          });
         })
         .then(() => {
           console.log("We got All Needed Info", this);
@@ -175,17 +171,6 @@ define("Tournament", function (parallelExec, sequentialExec, ajax) {
         });
     }
 
-    getScore(roundId, matchId) {
-      //http://localhost:8765/match?tournamentId=0&round=0&match=0
-      return ajax.get(
-        {
-          url: `/match?tournamentId=${this.tournamentId}&round=${roundId}&match=${matchId}`
-        })
-        .then(({score}) => {
-          this.allMatchData[roundId][matchId].matchScore = score;
-        });
-    }
-
     getTeamInfo(teamId) {
       //http://localhost:8765/team?tournamentId=0&teamId=0
       return ajax.get(
@@ -199,19 +184,24 @@ define("Tournament", function (parallelExec, sequentialExec, ajax) {
 
     playMatch(matchData) {
       console.log("Playing Match", matchData);
-      const {teamIds, roundId, matchId, matchScore} = matchData;
+      const {teamIds, roundId, matchId} = matchData;
+      return ajax.get({
+        url: `/match?tournamentId=${this.tournamentId}&round=${roundId}&match=${matchId}`
+      })
+        .then(({score: matchScore}) => {
+          this.allMatchData[roundId][matchId].matchScore = matchScore;
+          const querystr = teamIds.map((teamId) => {
+            return `teamScores=${this.allTeams[teamId].score}`;
+          }).join("&");
 
-      const querystr = teamIds.map((teamId) => {
-        return `teamScores=${this.allTeams[teamId].score}`;
-      }).join("&");
-
-      //http://localhost:8765/winner?tournamentId=0&teamScores=8&teamScores=9&matchScore=67
-      return ajax.get(
-        {
-          url: `/winner?tournamentId=${this.tournamentId}&${querystr}&matchScore=${matchScore}`
-        })
-        .then(({score}) => {
-          this.findWinnerFromScore(teamIds, score, roundId, matchId);
+          //http://localhost:8765/winner?tournamentId=0&teamScores=8&teamScores=9&matchScore=67
+          return ajax.get(
+            {
+              url: `/winner?tournamentId=${this.tournamentId}&${querystr}&matchScore=${matchScore}`
+            })
+            .then(({score}) => {
+              this.findWinnerFromScore(teamIds, score, roundId, matchId);
+            });
         });
     }
 
