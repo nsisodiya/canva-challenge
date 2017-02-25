@@ -40,7 +40,6 @@
                "matchId": 0,
                "teamIds": [0,1],
                "isMatchCompleted": true,
-               "matchScore": 61,
                "winnerTeamId": 0
            },
            {
@@ -48,7 +47,6 @@
                "matchId": 1,
                "teamIds": [2,3],
                "isMatchCompleted": true,
-               "matchScore": 53,
                "winnerTeamId": 3
            }
        ],
@@ -58,7 +56,6 @@
                "matchId": 0,
                "teamIds": [3,0],
                "isMatchCompleted": true,
-               "matchScore": 61,
                "winnerTeamId": 3
             }
        ]
@@ -93,7 +90,6 @@ define("Tournament", function (parallelExec, sequentialExec, ajax) {
             matchId,
             teamIds: null, //Who is Playing on this match
             isMatchCompleted: false, // Used for UI to show block
-            matchScore: null,
             winnerTeamId: null
           };
         });
@@ -189,7 +185,6 @@ define("Tournament", function (parallelExec, sequentialExec, ajax) {
         url: `/match?tournamentId=${this.tournamentId}&round=${roundId}&match=${matchId}`
       })
         .then(({score: matchScore}) => {
-          this.allMatchData[roundId][matchId].matchScore = matchScore;
           const querystr = teamIds.map((teamId) => {
             return `teamScores=${this.allTeams[teamId].score}`;
           }).join("&");
