@@ -1,29 +1,22 @@
 const SERVER_URL = window.location.origin;
-define("ajax", function () {
+define("ajax", function (AjaxPooler) {
+  window.AjaxPooler = AjaxPooler;
   var ajax = {
     get (config) {
-      return fetch(
-        `${SERVER_URL}${config.url}`,
-        {
-          method: "GET"
-        })
-        .then(function (response) {
-          return response.json();
-        });
+      return AjaxPooler.addRequestInPool({
+        method: "GET",
+        url: `${SERVER_URL}${config.url}`
+      });
     },
     post(config) {
-      return fetch(
-        `${SERVER_URL}${config.url}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
-          },
-          body: config.body,
-        })
-        .then(function (response) {
-          return response.json();
-        });
+      return AjaxPooler.addRequestInPool({
+        method: "POST",
+        headers: {
+          "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
+        },
+        body: config.body,
+        url: `${SERVER_URL}${config.url}`
+      });
     }
   };
   return ajax;

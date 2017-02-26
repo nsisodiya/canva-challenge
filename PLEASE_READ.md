@@ -4,10 +4,18 @@ There is a possibility of misunderstanding,
 If I missed anything or not as per your desired result, Please let me know, I can modify.
  
  
-Problems Faced
+Problems + Solutions
 * Webpack was not allowed to use
 => Because webpack was not allowed to use, I used MY own small utility called define.js. This define.js
 I wrote long back. So I just reused my own code.
+
+* Large number of Teams
+=> My solutions works very well with very large number of teams too , example - 10000.
+I have implemented a Pool or Queue. current limit is 200. So at a given only 200 active Ajax
+request can present in system.
+In order to see the result for such a large simulation (for example - team size=3, teams = 6561), You have to wait because
+Huge number of Ajax request are required to complete the simulation.
+
 
 * Query-String package.
 => I am not allowed to use webpack, So I cannot use package like https://github.com/sindresorhus/query-string or bluebird or similar.
