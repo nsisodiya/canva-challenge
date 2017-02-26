@@ -28,7 +28,7 @@ define("AjaxPooler", function () {
       if (this.activeRequests.length < this.limit) {
         const {url} = reqConfig;
         delete reqConfig.url;
-        console.log("Fetching ", this.activeRequests.length, this.waitingroom.length, url, reqConfig);
+        //console.log("Fetching ", this.activeRequests.length, this.waitingroom.length, url, reqConfig);
         const p = fetch(
           url,
           reqConfig
@@ -42,7 +42,7 @@ define("AjaxPooler", function () {
         return p;
       } else {
         //This will go in wait queue.
-        console.log("Sorry, Pool is full", this.activeRequests.length, this.waitingroom.length, reqConfig.url, reqConfig);
+        //console.log("Sorry, Pool is full", this.activeRequests.length, this.waitingroom.length, reqConfig.url, reqConfig);
         var innerMethods = {};
         var p1 = new Promise(function (resolve, reject) {
           innerMethods.reject = reject;
