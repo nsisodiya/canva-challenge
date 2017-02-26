@@ -15,9 +15,16 @@ define("TournamentUI", function (Tournament) {
     setUp() {
       document.querySelector("#start").addEventListener("click", () => {
         //TODO - Add Validation
+        document.querySelector("#winner").innerHTML = "";
         const teamsPerMatch = parseInt(document.querySelector("#teamsPerMatch").value);
         const numberOfTeams = parseInt(document.querySelector("#numberOfTeams").value);
-        this.runNewTournament(teamsPerMatch, numberOfTeams);
+        const rounds = Tournament.getNumberOfRounds(teamsPerMatch, numberOfTeams);
+        if (rounds !== null && typeof rounds === "number" &&
+          typeof teamsPerMatch === "number" && teamsPerMatch > 1) {
+          this.runNewTournament(teamsPerMatch, numberOfTeams);
+        } else {
+          window.alert("Please fill proper values like (2,8), (2,16), (3,9), (3,27), (3,81)");
+        }
       }, false);
     }
 

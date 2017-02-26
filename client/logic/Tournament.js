@@ -107,11 +107,6 @@ define("Tournament", function (parallelExec, sequentialExec, ajax) {
     runTournament() {
       this.createTournament()
         .then(() => {
-          return parallelExec(this.allTeamIds, (teamId) => {
-            return this.getTeamInfo(teamId);
-          });
-        })
-        .then(() => {
           console.log("We got All Needed Info", this);
           //We will play all Match one by one
           //All Round will be in Sequence. One by One
@@ -167,36 +162,60 @@ define("Tournament", function (parallelExec, sequentialExec, ajax) {
         });
     }
 
-    getTeamInfo(teamId) {
+    getMatchScore(roundId, matchId) {
+      return ajax.get({
+        url: `/match?tournamentId=${this.tournamentId}&round=${roundId}&match=${matchId}`
+      }).then(({score: matchScore}) => {
+        this.allMatchData[roundId][matchId].matchScore = matchScore;
+      });
+    }
+
+    getTeamInfo(teamId, roundId) {
       //http://localhost:8765/team?tournamentId=0&teamId=0
-      return ajax.get(
-        {
-          url: `/team?tournamentId=${this.tournamentId}&teamId=${teamId}`
-        })
-        .then((teamData) => {
-          this.allTeams[teamData.teamId] = teamData;
-        });
+      if (roundId === 0) {
+        return ajax.get(
+          {
+            url: `/team?tournamentId=${this.tournamentId}&teamId=${teamId}`
+          })
+          .then((teamData) => {
+            this.allTeams[teamData.teamId] = teamData;
+          });
+      } else {
+        //NO Need to Fetch TEam Details for rounds >0;
+        return Promise.resolve();
+      }
     }
 
     playMatch(matchData) {
       console.log("Playing Match", matchData);
       const {teamIds, roundId, matchId} = matchData;
-      return ajax.get({
-        url: `/match?tournamentId=${this.tournamentId}&round=${roundId}&match=${matchId}`
-      })
-        .then(({score: matchScore}) => {
-          const querystr = teamIds.map((teamId) => {
-            return `teamScores=${this.allTeams[teamId].score}`;
-          }).join("&");
 
-          //http://localhost:8765/winner?tournamentId=0&teamScores=8&teamScores=9&matchScore=67
-          return ajax.get(
-            {
-              url: `/winner?tournamentId=${this.tournamentId}&${querystr}&matchScore=${matchScore}`
-            })
-            .then(({score}) => {
-              this.findWinnerFromScore(teamIds, score, roundId, matchId);
-            });
+      /*
+       * Getting the Team info and Match info can go parallel.
+       * */
+
+      return Promise.all([
+        parallelExec(teamIds, (teamId) => {
+          return this.getTeamInfo(teamId, roundId);
+        }),
+        this.getMatchScore(roundId, matchId)
+      ]).then(() => {
+        //http://localhost:8765/winner?tournamentId=0&teamScores=8&teamScores=9&matchScore=67
+        return this.getWinnerScore(roundId, matchId)
+          .then(({score}) => {
+            this.findWinnerFromScore(teamIds, score, roundId, matchId);
+          });
+      });
+    }
+
+    getWinnerScore(roundId, matchId) {
+      const {teamIds, matchScore} = this.allMatchData[roundId][matchId];
+      const querystr = teamIds.map((teamId) => {
+        return `teamScores=${this.allTeams[teamId].score}`;
+      }).join("&");
+      return ajax.get(
+        {
+          url: `/winner?tournamentId=${this.tournamentId}&${querystr}&matchScore=${matchScore}`
         });
     }
 
