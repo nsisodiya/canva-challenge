@@ -200,56 +200,50 @@ define("Tournament", function (parallelExec, sequentialExec, ajax) {
         }),
         this.getMatchScore(roundId, matchId)
       ]).then(() => {
-        //http://localhost:8765/winner?tournamentId=0&teamScores=8&teamScores=9&matchScore=67
-        return this.getWinnerScore(roundId, matchId)
-          .then(({score}) => {
-            this.findWinnerFromScore(teamIds, score, roundId, matchId);
-          });
+        return this.findWinner(roundId, matchId);
       });
     }
 
-    getWinnerScore(roundId, matchId) {
+    findWinner(roundId, matchId) {
       const {teamIds, matchScore} = this.allMatchData[roundId][matchId];
       const querystr = teamIds.map((teamId) => {
         return `teamScores=${this.allTeams[teamId].score}`;
       }).join("&");
-      return ajax.get(
-        {
-          url: `/winner?tournamentId=${this.tournamentId}&${querystr}&matchScore=${matchScore}`
-        });
-    }
+      //http://localhost:8765/winner?tournamentId=0&teamScores=8&teamScores=9&matchScore=67
+      return ajax.get({
+        url: `/winner?tournamentId=${this.tournamentId}&${querystr}&matchScore=${matchScore}`
+      }).then(({score}) => {
+        //Check if there is a Tie
+        //Step 1 - Convert All Teams IDs Array to Team Object Array with score
+        //Step 2 - Filter all Winner Teams
+        const allWinnerTeamIds = teamIds
+          .map((teamId) => {
+            return {
+              teamId: teamId,
+              score: this.allTeams[teamId].score
+            };
+          })
+          .filter(function (teamData) {
+            return teamData.score === score;
+          })
+          .map(function (teamData) {
+            return teamData.teamId;
+          });
+        //Step 3 - If there are multiple Winner, Take something which is having Lowest id.
+        var winnerTeamId = Math.min(...allWinnerTeamIds);
+        this.allMatchData[roundId][matchId].winnerTeamId = winnerTeamId;
+        this.allMatchData[roundId][matchId].isMatchCompleted = true;
+        console.log("Winner Team Id ", winnerTeamId);
+        //Now, this Team is Winner, Lets Pass it to next Round.
 
-    findWinnerFromScore(teamIds, score, roundId, matchId) {
-      //Check if there is a Tie
-      //Step 1 - Convert All Teams IDs Array to Team Object Array with score
-      //Step 2 - Filter all Winner Teams
-      const allWinnerTeamIds = teamIds
-        .map((teamId) => {
-          return {
-            teamId: teamId,
-            score: this.allTeams[teamId].score
-          };
-        })
-        .filter(function (teamData) {
-          return teamData.score === score;
-        })
-        .map(function (teamData) {
-          return teamData.teamId;
-        });
-      //Step 3 - If there are multiple Winner, Take something which is having Lowest id.
-      var winnerTeamId = Math.min(...allWinnerTeamIds);
-      this.allMatchData[roundId][matchId].winnerTeamId = winnerTeamId;
-      this.allMatchData[roundId][matchId].isMatchCompleted = true;
-      console.log("Winner Team Id ", winnerTeamId);
-      //Now, this Team is Winner, Lets Pass it to next Round.
-
-      var totalRoundsPossible = this.allMatchData.length;
-      var nextRound = roundId + 1;
-      var nextMatchId = parseInt(matchId / this.teamsPerMatch);
-      if (nextRound < totalRoundsPossible) {
-        this.passTeamToNextRoundMatch(winnerTeamId, nextRound, nextMatchId);
-      }
-      this.sendUpdateToUI();
+        var totalRoundsPossible = this.allMatchData.length;
+        var nextRound = roundId + 1;
+        var nextMatchId = parseInt(matchId / this.teamsPerMatch);
+        if (nextRound < totalRoundsPossible) {
+          this.passTeamToNextRoundMatch(winnerTeamId, nextRound, nextMatchId);
+        }
+        this.sendUpdateToUI();
+      });
     }
 
     passTeamToNextRoundMatch(winnerTeamId, nextRound, nextMatchId) {

@@ -7,6 +7,7 @@ module.exports = function (configuration) {
     exclude: [],
     files: [
       '../../client/common/define.js',
+      '../../client/common/AjaxPooler.js',
       '../../client/common/ajax.js',
       '../../client/common/parallelExec.js',
       '../../client/common/sequentialExec.js',
