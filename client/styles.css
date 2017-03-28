@@ -3,6 +3,14 @@
 */
 
 
+.appContainer {
+    background-color: #292929;
+    transition: background-color 3s ease;
+    color: white;
+    padding: 20px;
+    margin-top: 10px;
+
+}
 .boxContainer {
     display: flex;
     flex-grow: 1;
@@ -15,11 +23,8 @@
     justify-content: center;
 }
 
-#app {
-    background-color: #292929;
-    color: white;
-    padding: 20px;
-    margin-top: 10px;
+.appContainer.tournamentEnded {
+    background-color: #00cacf;
 }
 
 .box {
@@ -28,8 +33,12 @@
     display: inline-block;
     margin: 10px;
 }
-.matchDone {
+.appContainer .matchDone {
     background-color: #00cacf;
+    transition: all 0.5s ease;
+}
+.appContainer.tournamentEnded .matchDone{
+    background-color: #292929;
 }
 
 .matchToBeDone {

@@ -77,6 +77,7 @@ define("Tournament", function (parallelExec, sequentialExec, ajax) {
       this.teamsPerMatch = teamsPerMatch;
       this.numberOfTeams = numberOfTeams;
       this.allTeams = {};
+      this.isTournamentPaused = false;
       const totalRounds = Tournament.getNumberOfRounds(this.teamsPerMatch, this.numberOfTeams);
       this.allMatchData = [];
       getArrayOf(totalRounds).forEach((v, roundId) => {

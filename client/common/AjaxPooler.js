@@ -7,6 +7,8 @@
  * If Application has to request more than 10 request, they will wait.
  * */
 
+window.isTournamentPaused = false;
+
 define("AjaxPooler", function () {
   var findAndRemoveFromArray = function (arr, val) {
     var i = arr.indexOf(val);
@@ -20,12 +22,23 @@ define("AjaxPooler", function () {
       this.limit = limit;
       this.activeRequests = [];
       this.waitingroom = [];
+      this.intCode = window.setInterval(() => {
+        if (this.canIAcceptNewRequests()) {
+          this.pickANewRequestFromWaiting();
+        }
+      }, 1000);
+      //TODO - cleanup intCode.
+    }
+
+    canIAcceptNewRequests() {
+      //return this.activeRequests.length < this.limit;
+      return this.activeRequests.length < this.limit && window.isTournamentPaused === false;
     }
 
     addRequestInPool(reqConfig) {
       //If there is a
       //CAN I accept this request ?
-      if (this.activeRequests.length < this.limit) {
+      if (this.canIAcceptNewRequests()) {
         const {url} = reqConfig;
         delete reqConfig.url;
         //console.log("Fetching ", this.activeRequests.length, this.waitingroom.length, url, reqConfig);
@@ -69,7 +82,7 @@ define("AjaxPooler", function () {
           //have remove an element from array  - this.activeRequests;
           try {
             innerMethods.resolve(this.addRequestInPool(reqConfig));
-          } catch (ex){
+          } catch (ex) {
             console.error(ex);
           }
         }
@@ -77,5 +90,5 @@ define("AjaxPooler", function () {
 
     }
   }
-  return new AjaxPooler(200);
+  return new AjaxPooler(20);
 });

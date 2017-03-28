@@ -26,6 +26,18 @@ define("TournamentUI", function (Tournament) {
           window.alert("Please fill proper values like (2,8), (2,16), (3,9), (3,27), (3,81)");
         }
       }, false);
+
+      const PauseUnPauseButton = document.querySelector("#PauseUnPauseButton");
+      PauseUnPauseButton.addEventListener("click", () => {
+        const currentTxt = PauseUnPauseButton.innerHTML;
+        if (currentTxt === "Pause") {
+          PauseUnPauseButton.innerHTML = "UnPause";
+          window.isTournamentPaused = true;
+        } else {
+          PauseUnPauseButton.innerHTML = "Pause";
+          window.isTournamentPaused = false;
+        }
+      }, false);
     }
 
     runNewTournament(teamsPerMatch, numberOfTeams) {
@@ -38,6 +50,8 @@ define("TournamentUI", function (Tournament) {
 
     render() {
       var matches = [];
+      var winnerClass = "";
+
       this.tournament.allMatchData.forEach(function (roundData) {
         roundData.forEach(function (matchData) {
           if (matchData.isMatchCompleted) {
@@ -51,13 +65,14 @@ define("TournamentUI", function (Tournament) {
       });
       var winnerStr = "";
       if (this.tournament.tournamentEnded === true) {
+        winnerClass = "tournamentEnded";
         winnerStr = `<div>${this.tournament.finalWinnerTeamName} is the Final Winner.</div>`;
       } else {
         if (this.tournament.currentWinnerTeamName !== undefined) {
           winnerStr = `<div>${this.tournament.currentWinnerTeamName} is the Current Winner.</div>`;
         }
       }
-      return `<div>\
+      return `<div class="appContainer ${winnerClass}">\
             ${winnerStr}
             <div class="makeItCenter"><div class="boxContainer">${matches.join(" ")}</div></div>
             </div>\
