@@ -234,6 +234,8 @@ define("Tournament", function (parallelExec, sequentialExec, ajax) {
         this.allMatchData[roundId][matchId].winnerTeamId = winnerTeamId;
         this.allMatchData[roundId][matchId].isMatchCompleted = true;
         console.log("Winner Team Id ", winnerTeamId);
+
+        this.currentWinnerTeamName = this.allTeams[winnerTeamId].name;
         //Now, this Team is Winner, Lets Pass it to next Round.
 
         var totalRoundsPossible = this.allMatchData.length;

@@ -1,3 +1,37 @@
 /*
     Edit me.
 */
+
+
+.boxContainer {
+    display: flex;
+    flex-grow: 1;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+.makeItCenter {
+    display: flex;
+    justify-content: center;
+}
+
+#app {
+    background-color: #292929;
+    color: white;
+    padding: 20px;
+    margin-top: 10px;
+}
+
+.box {
+    width: 40px;
+    height: 40px;
+    display: inline-block;
+    margin: 10px;
+}
+.matchDone {
+    background-color: #00cacf;
+}
+
+.matchToBeDone {
+    background-color: gray;
+}

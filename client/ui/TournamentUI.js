@@ -41,19 +41,25 @@ define("TournamentUI", function (Tournament) {
       this.tournament.allMatchData.forEach(function (roundData) {
         roundData.forEach(function (matchData) {
           if (matchData.isMatchCompleted) {
-            matches.push("■");
+            //matches.push("■");
+            matches.push("<div class='box matchDone'></div>");
           } else {
-            matches.push("□");
+            //matches.push("□");
+            matches.push("<div class='box matchToBeDone'></div>");
           }
         });
       });
       var winnerStr = "";
       if (this.tournament.tournamentEnded === true) {
-        winnerStr = `<div>${this.tournament.finalWinnerTeamName} is the Winner.</div>`;
+        winnerStr = `<div>${this.tournament.finalWinnerTeamName} is the Final Winner.</div>`;
+      } else {
+        if (this.tournament.currentWinnerTeamName !== undefined) {
+          winnerStr = `<div>${this.tournament.currentWinnerTeamName} is the Current Winner.</div>`;
+        }
       }
       return `<div>\
             ${winnerStr}
-            <div>${matches.join(" ")}</div>
+            <div class="makeItCenter"><div class="boxContainer">${matches.join(" ")}</div></div>
             </div>\
       `;
     }
