@@ -1,11 +1,14 @@
-const SERVER_URL = window.location.origin;
+//const SERVER_URL = window.location.origin;
+var getServerURL = function () {
+  return `http://canvaServer${parseInt(Math.random()*8) + 1}:${window.location.port}`;
+};
 define("ajax", function (AjaxPooler) {
   window.AjaxPooler = AjaxPooler;
   var ajax = {
     get (config) {
       return AjaxPooler.addRequestInPool({
         method: "GET",
-        url: `${SERVER_URL}${config.url}`
+        url: `${getServerURL()}${config.url}`
       });
     },
     post(config) {
@@ -15,7 +18,7 @@ define("ajax", function (AjaxPooler) {
           "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
         },
         body: config.body,
-        url: `${SERVER_URL}${config.url}`
+        url: `${getServerURL()}${config.url}`
       });
     }
   };
